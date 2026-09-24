@@ -55,7 +55,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/admin/settings', [AdminSettingsController::class, 'index'])->name('admin.settings');
-    Route::post('/admin/settings/reset-receipts', [AdminSettingsController::class, 'resetReceipts'])->name('admin.settings.reset-receipts');
+Route::post('/admin/settings/reset-receipts', [AdminSettingsController::class, 'resetReceipts'])->name('admin.settings.reset-receipts');
+Route::post('/admin/settings/reset-payments-and-receipts', [AdminSettingsController::class, 'resetPaymentsAndReceipts'])->name('admin.settings.reset-payments-and-receipts');
     Route::delete('/admin/settings/users/{user}', [AdminSettingsController::class, 'destroyUser'])->name('admin.settings.users.destroy');
 });
 

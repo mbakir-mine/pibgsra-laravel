@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Receipt;
 use App\Models\ReceiptSequence;
+use App\Models\Payment;
+use App\Models\PaymentAllocation;
+use App\Models\PaymentItemClaim;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Http\Request;
@@ -35,6 +38,23 @@ class AdminSettingsController extends Controller
         });
 
         return back()->with('status', "Semua rekod resit dipadam dan nombor resit tahun {$year} dimulakan semula.");
+    }
+
+    public function resetPaymentsAndReceipts(Request $request)
+    {
+        $this->owner($request);
+        $request->validate(['confirmation' => ['required', 'in:PADAM SEMUA BAYARAN']]);
+        $year = now()->year;
+
+        DB::transaction(function () use ($year) {
+            PaymentItemClaim::query()->delete();
+            PaymentAllocation::query()->delete();
+            Receipt::query()->delete();
+            Payment::query()->delete();
+            ReceiptSequence::where('receipt_year', $year)->update(['last_number' => 0]);
+        });
+
+        return back()->with('status', "Semua rekod bayaran dan resit dipadam. Nombor resit tahun {$year} dimulakan semula.");
     }
 
     public function destroyUser(Request $request, User $user)
