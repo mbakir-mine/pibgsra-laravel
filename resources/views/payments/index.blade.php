@@ -50,7 +50,11 @@
                                         </span>
                                     </td>
                                     <td class="py-3 pr-4 text-slate-600">
-                                        {{ $payment->receipt?->receipt_number ?: $payment->gateway_reference }}
+                                        @if ($payment->receipt?->receipt_number)
+                                            <a href="{{ route('payments.receipt', $payment) }}" class="font-semibold text-teal-700 underline decoration-teal-300 underline-offset-2 hover:text-teal-900">{{ $payment->receipt->receipt_number }}</a>
+                                        @else
+                                            {{ $payment->gateway_reference ?: '-' }}
+                                        @endif
                                         @if ($payment->receipt?->status === 'CANCELLED')
                                             <span class="ml-2 rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">DIBATALKAN</span>
                                         @endif

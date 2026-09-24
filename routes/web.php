@@ -36,6 +36,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/charges/create', [FamilyFeeChargeController::class, 'create'])->name('charges.create');
     Route::post('/charges', [FamilyFeeChargeController::class, 'store'])->name('charges.store');
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
     Route::get('/payments/create', [PaymentController::class, 'create'])->name('payments.create');
     Route::post('/payments', [PaymentController::class, 'store'])->name('payments.store');
     Route::get('/payments/{payment}/uat-checkout', [PaymentController::class, 'uatCheckout'])->name('payments.uat-checkout');

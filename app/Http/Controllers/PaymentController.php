@@ -18,6 +18,17 @@ use Illuminate\Validation\Rule;
 
 class PaymentController extends Controller
 {
+    public function receipt(Request $request, Payment $payment)
+    {
+        $payment->load(['school', 'family', 'receipt']);
+        $user = $request->user();
+        $allowed = $user->accessibleSchoolIds()->contains($payment->school_id)
+            && (! $user->isParent() || $user->accessibleFamilyIds()->contains($payment->family_id));
+        abort_unless($allowed, 403, 'Akses resit tidak dibenarkan.');
+
+        return view('payments.receipt', compact('payment'));
+    }
+
     public function index(Request $request)
     {
         if ($request->user()->isParent()) {
