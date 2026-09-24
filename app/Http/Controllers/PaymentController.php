@@ -44,9 +44,9 @@ class PaymentController extends Controller
         if ($request->user()->isParent()) {
             $families = Family::with(['school', 'students.charges.feeCategory', 'charges.feeCategory'])
                     ->whereIn('id', $this->parentFamilyIds($request))->get();
-            $families->each(fn($family) => $family->students->each(fn($student) => $student->setRelation('charges', $student->charges->whereNotIn('id', $claimedItemIds)->values())));
             return view('payments.parent-create', [
                 'families' => $families,
+                'claimedItemIds' => $claimedItemIds,
             ]);
         }
 
@@ -56,8 +56,7 @@ class PaymentController extends Controller
                 ->whereIn('school_id', $schoolIds)
                 ->orderBy('name')
             ->get();
-        $families->each(fn($family) => $family->students->each(fn($student) => $student->setRelation('charges', $student->charges->whereNotIn('id', $claimedItemIds)->values())));
-        return view('payments.parent-create', ['families' => $families]);
+        return view('payments.parent-create', ['families' => $families, 'claimedItemIds' => $claimedItemIds]);
     }
 
     public function store(Request $request)

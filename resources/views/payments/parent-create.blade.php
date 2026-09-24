@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-2xl font-semibold text-slate-900">Buat bayaran</h2></x-slot>
     <div class="py-8"><div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8"><div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p class="text-sm text-slate-500">Pilih item sumbangan untuk setiap anak. Jika ada lebih daripada seorang anak, setiap item dipaparkan secara berasingan.</p>
+        <p class="text-sm text-slate-500">Pilih item sumbangan untuk setiap anak. Item yang telah dibayar ditanda dan tidak boleh dipilih semula.</p>
         <form method="POST" action="{{ route('payments.store') }}" class="mt-6 space-y-5">@csrf
             <input type="hidden" name="school_id" id="school_id">
             <div><label class="block text-sm font-medium">Keluarga</label><select name="family_id" id="family_id" class="mt-1 w-full rounded-lg border-slate-300" required><option value="">Pilih keluarga</option>@foreach($families as $family)<option value="{{ $family->id }}" data-school="{{ $family->school_id }}">{{ $family->name }} — {{ $family->school?->name }}</option>@endforeach</select></div>
@@ -13,4 +13,5 @@
         </form>
     </div></div></div>
     <script>const family=document.getElementById('family_id'),school=document.getElementById('school_id'),total=document.getElementById('total'),amount=document.getElementById('amount');function refresh(){let sum=0;document.querySelectorAll('.student-charge:checked').forEach(c=>sum+=Number(c.dataset.amount||0));total.textContent='RM '+sum.toFixed(2);amount.value=sum.toFixed(2);}family?.addEventListener('change',()=>{school.value=family.options[family.selectedIndex]?.dataset.school||'';document.querySelectorAll('[data-family]').forEach(x=>x.classList.toggle('hidden',x.dataset.family!==family.value));document.querySelectorAll('.student-charge').forEach(x=>x.checked=false);refresh();});document.addEventListener('change',e=>{if(e.target.classList.contains('student-charge'))refresh();});</script>
+    <script>const claimedItemIds=@json($claimedItemIds ?? []);document.querySelectorAll('.student-charge').forEach(c=>{if(claimedItemIds.includes(Number(c.value))){c.checked=true;c.disabled=true;c.closest('label')?.classList.add('opacity-50','text-slate-400');}});</script>
 </x-app-layout>
