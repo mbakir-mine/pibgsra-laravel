@@ -71,6 +71,16 @@ class User extends Authenticatable
         return $this->accessibleSchoolsQuery()->pluck('id');
     }
 
+    public function accessibleFamilyIds(): Collection
+    {
+        if ($this->isParent()) {
+            return Family::whereHas('guardians', fn ($query) => $query->where('user_id', $this->id))
+                ->pluck('families.id');
+        }
+
+        return Family::whereIn('school_id', $this->accessibleSchoolIds())->pluck('id');
+    }
+
     public function platformScopeLabel(): string
     {
         $role = $this->primaryRole();
