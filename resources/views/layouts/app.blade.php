@@ -22,8 +22,8 @@
             @isset($header)
                 <header class="border-b border-slate-200 bg-white">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        <div class="text-xs font-semibold uppercase tracking-wide text-teal-700">Platform Pengurusan PIBG</div>
-                        <div class="mt-1 text-sm text-slate-500">{{ auth()->user()?->platformScopeLabel() }}</div>
+                        <div class="text-xl font-bold tracking-tight text-teal-800 sm:text-2xl">Platform Pengurusan PIBG</div>
+                        <div class="mt-1 text-base text-slate-500">{{ auth()->user()?->platformScopeLabel() }}</div>
                         <div class="mt-4">
                             {{ $header }}
                         </div>

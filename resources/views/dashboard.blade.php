@@ -6,8 +6,7 @@
     <div class="py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="rounded-lg bg-gradient-to-r from-slate-900 to-teal-800 p-6 text-white shadow-sm">
-                <h3 class="text-2xl font-semibold">Platform Pengurusan PIBG</h3>
-                <p class="mt-2 max-w-2xl text-sm text-teal-50">Pantau sekolah, keluarga, pelajar, yuran dan bayaran dalam satu tempat.</p>
+                <h3 class="text-2xl font-semibold sm:text-3xl">Selamat datang, {{ auth()->user()->name }}</h3>
             </div>
 
             <div class="mt-6 grid gap-4 md:grid-cols-4">
