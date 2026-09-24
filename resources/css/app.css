@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    body { background: #eef3f7; color: #0f172a; }
+    input, select, textarea { border-color: #cbd5e1; border-radius: .5rem; }
+    input:focus, select:focus, textarea:focus { border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,.12); outline: none; }
+    button, a { transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease; }
+}
+
+@layer components {
+    .page-card { border: 1px solid #e2e8f0; border-radius: .75rem; background: white; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+    .page-card:hover { box-shadow: 0 8px 24px rgba(15,23,42,.06); }
+    table thead { background: #f8fafc; }
+    table th { font-size: .72rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #64748b; }
+    table td, table th { padding: .85rem 1rem; }
+}

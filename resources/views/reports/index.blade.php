@@ -8,7 +8,7 @@
             <button class="rounded bg-indigo-600 px-4 py-2 text-white">Tapis</button>
             <a href="{{ route('reports.export', request()->only('from','to')) }}" class="rounded bg-teal-700 px-4 py-2 text-white">Eksport CSV</a>
         </form>
-        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             @foreach ([['Bayaran berjaya','RM '.number_format($totalPayments,2)],['Bilangan bayaran',$paymentCount],['Baki tertunggak','RM '.number_format($outstanding,2)],['Dibatalkan','RM '.number_format($cancelledAmount,2)],['Bil. pembatalan',$cancelledCount]] as [$label,$value])
                 <div class="rounded-lg bg-white p-5 shadow-sm"><div class="text-sm text-slate-500">{{ $label }}</div><div class="mt-2 text-2xl font-bold text-slate-900">{{ $value }}</div></div>
             @endforeach
