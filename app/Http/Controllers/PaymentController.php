@@ -145,7 +145,7 @@ class PaymentController extends Controller
     {
         $data = $request->validate(['reason' => ['required', 'string', 'max:500']]);
 
-        DB::transaction(function () use ($request, $payment, $data) {
+        DB::transaction(function () use ($request, $payment, $data, $approved) {
             $payment->refresh();
             abort_unless($payment->status === 'SUCCESS' && in_array($payment->receipt?->status, $approved ? ['CANCELLATION_REQUESTED'] : [null, 'ISSUED'], true), 422, 'Resit ini tidak boleh dibatalkan.');
 
