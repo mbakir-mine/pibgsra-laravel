@@ -241,12 +241,15 @@ class PaymentController extends Controller
                 ['last_number' => 0]
             );
             $sequence->increment('last_number');
+            $sequence->refresh();
+            $schoolCode = strtoupper(trim((string) $payment->school?->code));
+            $schoolCode = $schoolCode !== '' ? $schoolCode : 'SCH'.$payment->school_id;
 
             Receipt::firstOrCreate(
                 ['payment_id' => $payment->id],
                 [
                     'school_id' => $payment->school_id,
-                    'receipt_number' => $year.'-'.str_pad((string) $sequence->last_number, 6, '0', STR_PAD_LEFT),
+                    'receipt_number' => $schoolCode.'-'.$year.'-'.str_pad((string) $sequence->last_number, 6, '0', STR_PAD_LEFT),
                     'issued_at' => now(),
                 ]
             );
