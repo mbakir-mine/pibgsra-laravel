@@ -170,7 +170,7 @@ class PaymentController extends Controller
                 $balance = (float) $charge->amount - $paid;
                 $charge->update(['paid_amount' => $paid, 'balance_amount' => $balance, 'status' => $paid <= 0 ? 'UPCOMING' : 'PARTIAL']);
             }
-            PaymentItemClaim::where('payment_id', $payment->id)->update(['active' => false]);
+            PaymentItemClaim::where('payment_id', $payment->id)->delete();
 
             Payment::whereKey($payment->id)->update(['status' => 'CANCELLED']);
             Receipt::where('payment_id', $payment->id)->update(['status' => 'CANCELLED']);
