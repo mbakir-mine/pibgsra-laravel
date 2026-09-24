@@ -17,6 +17,16 @@ class PaymentController extends Controller
 {
     public function index(Request $request)
     {
+        if ($request->user()->isParent()) {
+            $familyIds = $this->parentFamilyIds($request);
+
+            return view('payments.parent-index', [
+                'families' => Family::with(['school', 'students', 'charges.feeCategory', 'payments.receipt'])
+                    ->whereIn('id', $familyIds)
+                    ->get(),
+            ]);
+        }
+
         return view('payments.index', [
             'payments' => Payment::with(['school', 'family', 'receipt'])
                 ->whereIn('school_id', $request->user()->accessibleSchoolIds())
@@ -27,6 +37,14 @@ class PaymentController extends Controller
 
     public function create(Request $request)
     {
+        if ($request->user()->isParent()) {
+            return view('payments.parent-create', [
+                'families' => Family::with(['school', 'students', 'charges.feeCategory'])
+                    ->whereIn('id', $this->parentFamilyIds($request))
+                    ->get(),
+            ]);
+        }
+
         $schoolIds = $request->user()->accessibleSchoolIds();
 
         return view('payments.create', [
@@ -41,9 +59,14 @@ class PaymentController extends Controller
     {
         $schoolIds = $request->user()->accessibleSchoolIds()->all();
 
+        $familyRule = 'required|exists:families,id';
+        if ($request->user()->isParent()) {
+            $familyRule = Rule::in($this->parentFamilyIds($request)->all());
+        }
+
         $data = $request->validate([
             'school_id' => ['required', Rule::in($schoolIds)],
-            'family_id' => 'required|exists:families,id',
+            'family_id' => $familyRule,
             'amount' => 'required|numeric|min:0.01',
             'method' => 'required|in:DIRECT_FPX_DUITNOW,MANUAL',
         ]);
@@ -171,5 +194,12 @@ class PaymentController extends Controller
             403,
             'Akses bayaran tidak dibenarkan.'
         );
+    }
+
+    private function parentFamilyIds(Request $request)
+    {
+        return Family::whereHas('guardians', function ($query) use ($request) {
+            $query->where('user_id', $request->user()->id);
+        })->pluck('families.id');
     }
 }
