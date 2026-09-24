@@ -8,10 +8,10 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('receipts', function (Blueprint $table) {
-            $table->string('status')->default('ISSUED')->after('issued_at');
-            $table->timestamp('cancelled_at')->nullable()->after('status');
-            $table->foreignId('cancelled_by')->nullable()->after('cancelled_at')->constrained('users')->nullOnDelete();
-            $table->text('cancellation_reason')->nullable()->after('cancelled_by');
+            if (! Schema::hasColumn('receipts', 'status')) $table->string('status')->default('ISSUED')->after('issued_at');
+            if (! Schema::hasColumn('receipts', 'cancelled_at')) $table->timestamp('cancelled_at')->nullable()->after('status');
+            if (! Schema::hasColumn('receipts', 'cancelled_by')) $table->foreignId('cancelled_by')->nullable()->after('cancelled_at')->constrained('users')->nullOnDelete();
+            if (! Schema::hasColumn('receipts', 'cancellation_reason')) $table->text('cancellation_reason')->nullable()->after('cancelled_by');
         });
     }
 
