@@ -12,6 +12,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\MonthClosingController;
 use App\Http\Controllers\StatementController;
+use App\Http\Controllers\AdminSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
@@ -53,6 +54,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/admin/settings', [AdminSettingsController::class, 'index'])->name('admin.settings');
+    Route::post('/admin/settings/reset-receipts', [AdminSettingsController::class, 'resetReceipts'])->name('admin.settings.reset-receipts');
+    Route::delete('/admin/settings/users/{user}', [AdminSettingsController::class, 'destroyUser'])->name('admin.settings.users.destroy');
 });
 
 require __DIR__.'/auth.php';
