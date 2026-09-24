@@ -21,7 +21,7 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
+          protocol: ftps
           timeout: 600000
           log-level: verbose
           # The deploy account is already jailed to the PIBGSRA document root.
