@@ -154,7 +154,7 @@ class PaymentController extends Controller
                 $charge = FamilyFeeCharge::lockForUpdate()->find($allocation->family_fee_charge_id);
                 if (! $charge) continue;
                 $paid = max(0, (float) $charge->paid_amount - (float) $allocation->amount);
-                $balance = (float) $charge->final_amount - $paid;
+                $balance = (float) $charge->amount - $paid;
                 $charge->update(['paid_amount' => $paid, 'balance_amount' => $balance, 'status' => $paid <= 0 ? 'UPCOMING' : 'PARTIAL']);
             }
 
