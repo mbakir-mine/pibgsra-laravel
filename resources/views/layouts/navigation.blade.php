@@ -33,7 +33,7 @@
                     <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
                         {{ __('Laporan') }}
                     </x-nav-link>
-                    @if (Auth::user()->isOwner())
+                    @if (Auth::user()->isOwner() && Route::has('admin.settings'))
                         <x-nav-link :href="route('admin.settings')" :active="request()->routeIs('admin.settings*')">
                             {{ __('Tetapan Admin') }}
                         </x-nav-link>
@@ -111,7 +111,7 @@
             <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
                 {{ __('Laporan') }}
             </x-responsive-nav-link>
-            @if (Auth::user()->isOwner())
+                @if (Auth::user()->isOwner() && Route::has('admin.settings'))
                 <x-responsive-nav-link :href="route('admin.settings')" :active="request()->routeIs('admin.settings*')">
                     {{ __('Tetapan Admin') }}
                 </x-responsive-nav-link>
