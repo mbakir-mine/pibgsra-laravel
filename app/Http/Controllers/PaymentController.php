@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\PaymentAllocation;
 use App\Models\Receipt;
 use App\Models\ReceiptSequence;
+use App\Models\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -106,6 +107,33 @@ class PaymentController extends Controller
         }
 
         return redirect()->route('payments.index')->with('status', 'Bayaran UAT berjaya. Resit telah dijana.');
+    }
+
+    public function cancelReceipt(Request $request, Payment $payment)
+    {
+        abort_unless($request->user()->hasAnyPibgsraRole([UserRole::OWNER, UserRole::SCHOOL_ADMIN, UserRole::HEADMASTER]), 403, 'Hanya Owner atau Guru Besar boleh membatalkan resit.');
+        $this->authorizePaymentAccess($payment);
+        $data = $request->validate(['reason' => ['required', 'string', 'max:500']]);
+
+        DB::transaction(function () use ($request, $payment, $data) {
+            $payment->refresh();
+            abort_unless($payment->status === 'SUCCESS', 422, 'Hanya bayaran berjaya boleh dibatalkan.');
+
+            foreach ($payment->allocations()->lockForUpdate()->get() as $allocation) {
+                if (! $allocation->family_fee_charge_id) continue;
+                $charge = FamilyFeeCharge::lockForUpdate()->find($allocation->family_fee_charge_id);
+                if (! $charge) continue;
+                $paid = max(0, (float) $charge->paid_amount - (float) $allocation->amount);
+                $balance = (float) $charge->final_amount - $paid;
+                $charge->update(['paid_amount' => $paid, 'balance_amount' => $balance, 'status' => $paid <= 0 ? 'UPCOMING' : 'PARTIAL']);
+            }
+
+            $payment->update(['status' => 'CANCELLED']);
+            $payment->receipt()->update(['status' => 'CANCELLED', 'cancelled_at' => now(), 'cancelled_by' => $request->user()->id, 'cancellation_reason' => $data['reason']]);
+            AuditLog::create(['school_id' => $payment->school_id, 'actor_user_id' => $request->user()->id, 'action' => 'cancelled', 'entity_type' => Payment::class, 'entity_id' => $payment->id, 'reason' => $data['reason'], 'old_values' => ['status' => 'SUCCESS'], 'new_values' => ['status' => 'CANCELLED'], 'ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]);
+        });
+
+        return redirect()->route('payments.index')->with('status', 'Resit berjaya dibatalkan dan baki caj telah dipulangkan.');
     }
 
     private function markPaymentSuccessful(Payment $payment, string $transactionId): void

@@ -59,7 +59,7 @@ class User extends Authenticatable
         }
 
         $schoolIds = $this->roles()
-            ->whereIn('role', [UserRole::SCHOOL_ADMIN, UserRole::PARENT])
+            ->whereIn('role', [UserRole::SCHOOL_ADMIN, UserRole::HEADMASTER, UserRole::PARENT])
             ->whereNotNull('school_id')
             ->pluck('school_id');
 

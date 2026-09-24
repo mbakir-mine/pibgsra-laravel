@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/payments', [PaymentController::class, 'store'])->name('payments.store');
     Route::get('/payments/{payment}/uat-checkout', [PaymentController::class, 'uatCheckout'])->name('payments.uat-checkout');
     Route::post('/payments/{payment}/uat-success', [PaymentController::class, 'uatSuccess'])->name('payments.uat-success');
+    Route::post('/payments/{payment}/cancel-receipt', [PaymentController::class, 'cancelReceipt'])->name('payments.cancel-receipt');
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
     Route::get('/audit', [AuditLogController::class, 'index'])->name('audit.index');

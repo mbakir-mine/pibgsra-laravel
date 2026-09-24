@@ -10,6 +10,7 @@ class UserRole extends Model
     public const STATE_ADMIN = 'STATE_ADMIN';
     public const DISTRICT_ADMIN = 'DISTRICT_ADMIN';
     public const SCHOOL_ADMIN = 'SCHOOL_ADMIN';
+    public const HEADMASTER = 'HEADMASTER';
     public const PARENT = 'PARENT';
 
     public const ADMIN_ROLES = [
@@ -17,6 +18,7 @@ class UserRole extends Model
         self::STATE_ADMIN,
         self::DISTRICT_ADMIN,
         self::SCHOOL_ADMIN,
+        self::HEADMASTER,
     ];
 
     public $timestamps = false;

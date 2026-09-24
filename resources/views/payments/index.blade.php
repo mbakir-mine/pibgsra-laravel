@@ -32,6 +32,9 @@
                                 <th class="py-3 pr-4">Kaedah</th>
                                 <th class="py-3 pr-4">Status</th>
                                 <th class="py-3 pr-4">Resit</th>
+                                @if (auth()->user()->hasAnyPibgsraRole(['OWNER', 'SCHOOL_ADMIN', 'HEADMASTER']))
+                                    <th class="py-3 pr-4">Tindakan</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
@@ -46,11 +49,29 @@
                                             {{ $payment->status }}
                                         </span>
                                     </td>
-                                    <td class="py-3 pr-4 text-slate-600">{{ $payment->receipt?->receipt_number ?: $payment->gateway_reference }}</td>
+                                    <td class="py-3 pr-4 text-slate-600">
+                                        {{ $payment->receipt?->receipt_number ?: $payment->gateway_reference }}
+                                        @if ($payment->receipt?->status === 'CANCELLED')
+                                            <span class="ml-2 rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">DIBATALKAN</span>
+                                        @endif
+                                    </td>
+                                    @if (auth()->user()->hasAnyPibgsraRole(['OWNER', 'SCHOOL_ADMIN', 'HEADMASTER']))
+                                        <td class="py-3 pr-4">
+                                            @if ($payment->status === 'SUCCESS' && $payment->receipt?->status !== 'CANCELLED')
+                                                <form method="POST" action="{{ route('payments.cancel-receipt', $payment) }}" onsubmit="return confirm('Batalkan resit ini? Tindakan ini akan dipaparkan dalam audit.');">
+                                                    @csrf
+                                                    <input name="reason" required maxlength="500" placeholder="Sebab pembatalan" class="mb-1 w-40 rounded border border-slate-300 px-2 py-1 text-xs">
+                                                    <button class="rounded bg-red-600 px-2 py-1 text-xs font-semibold text-white hover:bg-red-700">Batal resit</button>
+                                                </form>
+                                            @else
+                                                <span class="text-xs text-slate-400">-</span>
+                                            @endif
+                                        </td>
+                                    @endif
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="py-8 text-center text-slate-500">Tiada bayaran direkodkan.</td>
+                                    <td colspan="7" class="py-8 text-center text-slate-500">Tiada bayaran direkodkan.</td>
                                 </tr>
                             @endforelse
                         </tbody>
