@@ -149,17 +149,18 @@ class PaymentController extends Controller
             $payment->refresh();
             abort_unless($payment->status === 'SUCCESS' && in_array($payment->receipt?->status, $approved ? ['CANCELLATION_REQUESTED'] : [null, 'ISSUED'], true), 422, 'Resit ini tidak boleh dibatalkan.');
 
-            foreach ($payment->allocations()->lockForUpdate()->get() as $allocation) {
+            $allocations = $payment->allocations()->get();
+            foreach ($allocations as $allocation) {
                 if (! $allocation->family_fee_charge_id) continue;
-                $charge = FamilyFeeCharge::lockForUpdate()->find($allocation->family_fee_charge_id);
+                    $charge = FamilyFeeCharge::find($allocation->family_fee_charge_id);
                 if (! $charge) continue;
                 $paid = max(0, (float) $charge->paid_amount - (float) $allocation->amount);
                 $balance = (float) $charge->amount - $paid;
                 $charge->update(['paid_amount' => $paid, 'balance_amount' => $balance, 'status' => $paid <= 0 ? 'UPCOMING' : 'PARTIAL']);
             }
 
-            $payment->update(['status' => 'CANCELLED']);
-            $payment->receipt()->update(['status' => 'CANCELLED']);
+            Payment::whereKey($payment->id)->update(['status' => 'CANCELLED']);
+            Receipt::where('payment_id', $payment->id)->update(['status' => 'CANCELLED']);
             AuditLog::create(['school_id' => $payment->school_id, 'actor_user_id' => $request->user()->id, 'action' => 'cancelled', 'entity_type' => Payment::class, 'entity_id' => $payment->id, 'reason' => $data['reason'], 'old_values' => ['status' => 'SUCCESS'], 'new_values' => ['status' => 'CANCELLED'], 'ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]);
         });
 
