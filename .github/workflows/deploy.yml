@@ -1,0 +1,44 @@
+name: Deploy to cPanel
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy via FTP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: FTP Deploy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /public_html/pibgsra.ismp.my/
+          local-dir: ./
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/vendor/**
+            **/.env
+            **/.github/**
+            **/storage/logs/**
+            **/tests/**
+            **/.editorconfig
+            **/.gitignore
+            **/.gitattributes
+            **/README.md
+            **/CPANEL_DEPLOYMENT.md
+            **/AGENTS.md
+            **/CLAUDE.md
+            **/.phpunit.result.cache
+            **/.npmrc
+            **/*.md
+            **/*.zip
