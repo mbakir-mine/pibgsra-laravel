@@ -47,8 +47,8 @@ class PaymentController extends Controller
 
         $schoolIds = $request->user()->accessibleSchoolIds();
 
-        return view('payments.create', [
-            'families' => Family::with('school')
+        return view('payments.parent-create', [
+            'families' => Family::with(['school', 'students.charges.feeCategory'])
                 ->whereIn('school_id', $schoolIds)
                 ->orderBy('name')
                 ->get(),
