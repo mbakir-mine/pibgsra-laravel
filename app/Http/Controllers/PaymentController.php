@@ -21,7 +21,7 @@ class PaymentController extends Controller
             $familyIds = $this->parentFamilyIds($request);
 
             return view('payments.parent-index', [
-                'families' => Family::with(['school', 'students', 'charges.feeCategory', 'payments.receipt'])
+                'families' => Family::with(['school', 'students.charges.feeCategory', 'charges.feeCategory', 'payments.receipt'])
                     ->whereIn('id', $familyIds)
                     ->get(),
             ]);
@@ -39,7 +39,7 @@ class PaymentController extends Controller
     {
         if ($request->user()->isParent()) {
             return view('payments.parent-create', [
-                'families' => Family::with(['school', 'students', 'charges.feeCategory'])
+                'families' => Family::with(['school', 'students.charges.feeCategory', 'charges.feeCategory'])
                     ->whereIn('id', $this->parentFamilyIds($request))
                     ->get(),
             ]);

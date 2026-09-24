@@ -9,6 +9,8 @@ use App\Models\AcademicSession;
 use App\Models\School;
 use App\Models\Family;
 use App\Models\FamilyFeeCharge;
+use App\Models\Student;
+use App\Models\StudentFeeCharge;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -80,6 +82,14 @@ class FeeCategoryController extends Controller
                         ['school_id'=>$data['school_id'],'family_id'=>$family->id,'academic_session_id'=>$session->id,'fee_category_id'=>$categoryId],
                         ['amount'=>$amount,'paid_amount'=>0,'balance_amount'=>$amount,'due_date'=>$session->starts_on,'status'=>'DUE']
                     );
+                }
+                foreach (Student::where('school_id', $data['school_id'])->where('family_id', $family->id)->where('is_active', true)->get() as $student) {
+                    foreach ($rates as [$categoryId, $amount]) {
+                        StudentFeeCharge::firstOrCreate(
+                            ['school_id'=>$data['school_id'],'student_id'=>$student->id,'academic_session_id'=>$session->id,'fee_category_id'=>$categoryId,'billing_period_type'=>'ANNUAL','billing_year'=>(int) now()->year],
+                            ['original_amount'=>$amount,'adjustment_amount'=>0,'final_amount'=>$amount,'paid_amount'=>0,'balance_amount'=>$amount,'due_date'=>$session->starts_on,'status'=>'DUE']
+                        );
+                    }
                 }
             }
         });
