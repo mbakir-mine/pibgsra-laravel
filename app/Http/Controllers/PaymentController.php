@@ -7,8 +7,10 @@ use App\Models\Family;
 use App\Models\FamilyFeeCharge;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;
+use App\Models\PaymentItemClaim;
 use App\Models\Receipt;
 use App\Models\ReceiptSequence;
+use App\Models\StudentFeeCharge;
 use App\Models\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,22 +40,24 @@ class PaymentController extends Controller
 
     public function create(Request $request)
     {
+        $claimedItemIds = PaymentItemClaim::where('active', true)->pluck('student_fee_charge_id')->all();
         if ($request->user()->isParent()) {
+            $families = Family::with(['school', 'students.charges.feeCategory', 'charges.feeCategory'])
+                    ->whereIn('id', $this->parentFamilyIds($request))->get();
+            $families->each(fn($family) => $family->students->each(fn($student) => $student->setRelation('charges', $student->charges->whereNotIn('id', $claimedItemIds)->values())));
             return view('payments.parent-create', [
-                'families' => Family::with(['school', 'students.charges.feeCategory', 'charges.feeCategory'])
-                    ->whereIn('id', $this->parentFamilyIds($request))
-                    ->get(),
+                'families' => $families,
             ]);
         }
 
         $schoolIds = $request->user()->accessibleSchoolIds();
 
-        return view('payments.parent-create', [
-            'families' => Family::with(['school', 'students.charges.feeCategory'])
+        $families = Family::with(['school', 'students.charges.feeCategory'])
                 ->whereIn('school_id', $schoolIds)
                 ->orderBy('name')
-                ->get(),
-        ]);
+            ->get();
+        $families->each(fn($family) => $family->students->each(fn($student) => $student->setRelation('charges', $student->charges->whereNotIn('id', $claimedItemIds)->values())));
+        return view('payments.parent-create', ['families' => $families]);
     }
 
     public function store(Request $request)
@@ -70,13 +74,22 @@ class PaymentController extends Controller
             'family_id' => $familyRule,
             'amount' => 'required|numeric|min:0.01',
             'method' => 'required|in:DIRECT_FPX_DUITNOW,MANUAL',
+            'student_fee_charge_ids' => ['required','array','min:1'],
+            'student_fee_charge_ids.*' => ['integer','distinct'],
         ]);
-
-        $payment = Payment::create($data + [
+        $payment = DB::transaction(function () use ($data) {
+            $ids = array_map('intval', $data['student_fee_charge_ids']);
+            $charges = StudentFeeCharge::whereIn('id', $ids)->where('school_id', $data['school_id'])->whereHas('student', fn($q) => $q->where('family_id', $data['family_id']))->where('balance_amount','>',0)->lockForUpdate()->get();
+            abort_unless($charges->count() === count($ids), 422, 'Satu atau lebih item sudah dibayar atau tidak sah.');
+            $payment = Payment::create([
+                'school_id'=>$data['school_id'],'family_id'=>$data['family_id'],'amount'=>$charges->sum(fn($c)=>(float)$c->balance_amount),'method'=>$data['method'],
             'status' => 'PENDING',
             'gateway_provider' => $data['method'] === 'DIRECT_FPX_DUITNOW' ? 'BANK_DIRECT_UAT' : null,
             'gateway_reference' => 'PIBGSRA-'.now()->format('YmdHis').'-'.random_int(1000, 9999),
-        ]);
+            ]);
+            foreach($charges as $charge) PaymentItemClaim::create(['payment_id'=>$payment->id,'student_fee_charge_id'=>$charge->id]);
+            return $payment;
+        });
 
         if ($payment->method === 'DIRECT_FPX_DUITNOW') {
             $payment->update([
@@ -158,6 +171,7 @@ class PaymentController extends Controller
                 $balance = (float) $charge->amount - $paid;
                 $charge->update(['paid_amount' => $paid, 'balance_amount' => $balance, 'status' => $paid <= 0 ? 'UPCOMING' : 'PARTIAL']);
             }
+            PaymentItemClaim::where('payment_id', $payment->id)->update(['active' => false]);
 
             Payment::whereKey($payment->id)->update(['status' => 'CANCELLED']);
             Receipt::where('payment_id', $payment->id)->update(['status' => 'CANCELLED']);

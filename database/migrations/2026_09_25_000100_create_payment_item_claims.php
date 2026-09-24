@@ -1,0 +1,3 @@
+<?php
+use Illuminate\Database\Migrations\Migration; use Illuminate\Database\Schema\Blueprint; use Illuminate\Support\Facades\Schema;
+return new class extends Migration { public function up(): void { if(Schema::hasTable('payment_item_claims')) return; Schema::create('payment_item_claims',function(Blueprint $t){$t->id();$t->foreignId('payment_id')->constrained()->cascadeOnDelete();$t->foreignId('student_fee_charge_id')->constrained()->restrictOnDelete();$t->boolean('active')->default(true);$t->timestamps();$t->unique(['student_fee_charge_id','active']);}); } public function down(): void {Schema::dropIfExists('payment_item_claims');} };
