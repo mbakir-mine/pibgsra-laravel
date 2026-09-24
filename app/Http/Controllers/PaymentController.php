@@ -124,7 +124,7 @@ class PaymentController extends Controller
         $this->authorizePaymentAccess($payment);
         $data = $request->validate(['reason' => ['required', 'string', 'max:500']]);
 
-        abort_unless($payment->status === 'SUCCESS' && $payment->receipt?->status === 'ISSUED', 422, 'Resit ini tidak boleh dimohon untuk pembatalan.');
+        abort_unless($payment->status === 'SUCCESS' && in_array($payment->receipt?->status, [null, 'ISSUED'], true), 422, 'Resit ini tidak boleh dimohon untuk pembatalan.');
         $payment->receipt()->update(['status' => 'CANCELLATION_REQUESTED', 'cancellation_reason' => $data['reason']]);
         AuditLog::create(['school_id' => $payment->school_id, 'actor_user_id' => $request->user()->id, 'action' => 'cancellation_requested', 'entity_type' => Payment::class, 'entity_id' => $payment->id, 'reason' => $data['reason'], 'old_values' => ['status' => 'ISSUED'], 'new_values' => ['status' => 'CANCELLATION_REQUESTED'], 'ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]);
 
@@ -147,7 +147,7 @@ class PaymentController extends Controller
 
         DB::transaction(function () use ($request, $payment, $data) {
             $payment->refresh();
-            abort_unless($payment->status === 'SUCCESS' && in_array($payment->receipt?->status, $approved ? ['CANCELLATION_REQUESTED'] : ['ISSUED'], true), 422, 'Resit ini tidak boleh dibatalkan.');
+            abort_unless($payment->status === 'SUCCESS' && in_array($payment->receipt?->status, $approved ? ['CANCELLATION_REQUESTED'] : [null, 'ISSUED'], true), 422, 'Resit ini tidak boleh dibatalkan.');
 
             foreach ($payment->allocations()->lockForUpdate()->get() as $allocation) {
                 if (! $allocation->family_fee_charge_id) continue;
