@@ -72,7 +72,7 @@
                                             @elseif ($payment->receipt?->status === 'CANCELLATION_REQUESTED' && auth()->user()->hasAnyPibgsraRole(['HEADMASTER']))
                                                 <form method="POST" action="{{ route('payments.approve-cancellation', $payment) }}" onsubmit="return confirm('Luluskan pembatalan resit ini?');">
                                                     @csrf
-                                                    <input name="reason" required maxlength="500" value="{{ $payment->receipt?->cancellation_reason }}" class="mb-1 w-40 rounded border border-slate-300 px-2 py-1 text-xs">
+                                                    <input name="reason" required maxlength="500" placeholder="Sahkan sebab" class="mb-1 w-40 rounded border border-slate-300 px-2 py-1 text-xs">
                                                     <button class="rounded bg-red-600 px-2 py-1 text-xs font-semibold text-white hover:bg-red-700">Lulus & batal</button>
                                                 </form>
                                             @elseif ($payment->receipt?->status === 'CANCELLATION_REQUESTED')

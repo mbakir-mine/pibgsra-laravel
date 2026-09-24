@@ -125,7 +125,7 @@ class PaymentController extends Controller
         $data = $request->validate(['reason' => ['required', 'string', 'max:500']]);
 
         abort_unless($payment->status === 'SUCCESS' && in_array($payment->receipt?->status, [null, 'ISSUED'], true), 422, 'Resit ini tidak boleh dimohon untuk pembatalan.');
-        $payment->receipt()->update(['status' => 'CANCELLATION_REQUESTED', 'cancellation_reason' => $data['reason']]);
+        $payment->receipt()->update(['status' => 'CANCELLATION_REQUESTED']);
         AuditLog::create(['school_id' => $payment->school_id, 'actor_user_id' => $request->user()->id, 'action' => 'cancellation_requested', 'entity_type' => Payment::class, 'entity_id' => $payment->id, 'reason' => $data['reason'], 'old_values' => ['status' => 'ISSUED'], 'new_values' => ['status' => 'CANCELLATION_REQUESTED'], 'ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]);
 
         return redirect()->route('payments.index')->with('status', 'Permohonan pembatalan dihantar untuk kelulusan Guru Besar.');
@@ -159,7 +159,7 @@ class PaymentController extends Controller
             }
 
             $payment->update(['status' => 'CANCELLED']);
-            $payment->receipt()->update(['status' => 'CANCELLED', 'cancelled_at' => now(), 'cancelled_by' => $request->user()->id, 'cancellation_reason' => $data['reason']]);
+            $payment->receipt()->update(['status' => 'CANCELLED']);
             AuditLog::create(['school_id' => $payment->school_id, 'actor_user_id' => $request->user()->id, 'action' => 'cancelled', 'entity_type' => Payment::class, 'entity_id' => $payment->id, 'reason' => $data['reason'], 'old_values' => ['status' => 'SUCCESS'], 'new_values' => ['status' => 'CANCELLED'], 'ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]);
         });
 
