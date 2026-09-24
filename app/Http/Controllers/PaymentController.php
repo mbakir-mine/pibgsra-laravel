@@ -111,13 +111,43 @@ class PaymentController extends Controller
 
     public function cancelReceipt(Request $request, Payment $payment)
     {
-        abort_unless($request->user()->hasAnyPibgsraRole([UserRole::OWNER, UserRole::SCHOOL_ADMIN, UserRole::HEADMASTER]), 403, 'Hanya Owner atau Guru Besar boleh membatalkan resit.');
+        abort_unless($request->user()->hasAnyPibgsraRole([UserRole::OWNER]), 403, 'Hanya Owner boleh membatalkan resit terus.');
         $this->authorizePaymentAccess($payment);
+        $this->finalizeCancellation($request, $payment, false);
+
+        return redirect()->route('payments.index')->with('status', 'Resit berjaya dibatalkan dan baki caj telah dipulangkan.');
+    }
+
+    public function requestCancellation(Request $request, Payment $payment)
+    {
+        abort_unless($request->user()->hasAnyPibgsraRole([UserRole::SCHOOL_ADMIN]), 403, 'Hanya Admin Sekolah boleh memohon pembatalan.');
+        $this->authorizePaymentAccess($payment);
+        $data = $request->validate(['reason' => ['required', 'string', 'max:500']]);
+
+        abort_unless($payment->status === 'SUCCESS' && $payment->receipt?->status === 'ISSUED', 422, 'Resit ini tidak boleh dimohon untuk pembatalan.');
+        $payment->receipt()->update(['status' => 'CANCELLATION_REQUESTED', 'cancellation_reason' => $data['reason']]);
+        AuditLog::create(['school_id' => $payment->school_id, 'actor_user_id' => $request->user()->id, 'action' => 'cancellation_requested', 'entity_type' => Payment::class, 'entity_id' => $payment->id, 'reason' => $data['reason'], 'old_values' => ['status' => 'ISSUED'], 'new_values' => ['status' => 'CANCELLATION_REQUESTED'], 'ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]);
+
+        return redirect()->route('payments.index')->with('status', 'Permohonan pembatalan dihantar untuk kelulusan Guru Besar.');
+    }
+
+    public function approveCancellation(Request $request, Payment $payment)
+    {
+        abort_unless($request->user()->hasAnyPibgsraRole([UserRole::HEADMASTER]), 403, 'Hanya Guru Besar boleh meluluskan pembatalan.');
+        $this->authorizePaymentAccess($payment);
+        abort_unless($payment->receipt?->status === 'CANCELLATION_REQUESTED', 422, 'Tiada permohonan pembatalan untuk resit ini.');
+        $this->finalizeCancellation($request, $payment, true);
+
+        return redirect()->route('payments.index')->with('status', 'Pembatalan resit diluluskan dan baki caj telah dipulangkan.');
+    }
+
+    private function finalizeCancellation(Request $request, Payment $payment, bool $approved): void
+    {
         $data = $request->validate(['reason' => ['required', 'string', 'max:500']]);
 
         DB::transaction(function () use ($request, $payment, $data) {
             $payment->refresh();
-            abort_unless($payment->status === 'SUCCESS', 422, 'Hanya bayaran berjaya boleh dibatalkan.');
+            abort_unless($payment->status === 'SUCCESS' && in_array($payment->receipt?->status, $approved ? ['CANCELLATION_REQUESTED'] : ['ISSUED'], true), 422, 'Resit ini tidak boleh dibatalkan.');
 
             foreach ($payment->allocations()->lockForUpdate()->get() as $allocation) {
                 if (! $allocation->family_fee_charge_id) continue;
@@ -133,7 +163,6 @@ class PaymentController extends Controller
             AuditLog::create(['school_id' => $payment->school_id, 'actor_user_id' => $request->user()->id, 'action' => 'cancelled', 'entity_type' => Payment::class, 'entity_id' => $payment->id, 'reason' => $data['reason'], 'old_values' => ['status' => 'SUCCESS'], 'new_values' => ['status' => 'CANCELLED'], 'ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]);
         });
 
-        return redirect()->route('payments.index')->with('status', 'Resit berjaya dibatalkan dan baki caj telah dipulangkan.');
     }
 
     private function markPaymentSuccessful(Payment $payment, string $transactionId): void

@@ -57,12 +57,26 @@
                                     </td>
                                     @if (auth()->user()->hasAnyPibgsraRole(['OWNER', 'SCHOOL_ADMIN', 'HEADMASTER']))
                                         <td class="py-3 pr-4">
-                                            @if ($payment->status === 'SUCCESS' && $payment->receipt?->status !== 'CANCELLED')
+                                            @if ($payment->status === 'SUCCESS' && $payment->receipt?->status === 'ISSUED' && auth()->user()->hasAnyPibgsraRole(['OWNER']))
                                                 <form method="POST" action="{{ route('payments.cancel-receipt', $payment) }}" onsubmit="return confirm('Batalkan resit ini? Tindakan ini akan dipaparkan dalam audit.');">
                                                     @csrf
                                                     <input name="reason" required maxlength="500" placeholder="Sebab pembatalan" class="mb-1 w-40 rounded border border-slate-300 px-2 py-1 text-xs">
                                                     <button class="rounded bg-red-600 px-2 py-1 text-xs font-semibold text-white hover:bg-red-700">Batal resit</button>
                                                 </form>
+                                            @elseif ($payment->status === 'SUCCESS' && $payment->receipt?->status === 'ISSUED' && auth()->user()->hasAnyPibgsraRole(['SCHOOL_ADMIN']))
+                                                <form method="POST" action="{{ route('payments.request-cancellation', $payment) }}" onsubmit="return confirm('Hantar permohonan pembatalan kepada Guru Besar?');">
+                                                    @csrf
+                                                    <input name="reason" required maxlength="500" placeholder="Sebab permohonan" class="mb-1 w-40 rounded border border-slate-300 px-2 py-1 text-xs">
+                                                    <button class="rounded bg-amber-600 px-2 py-1 text-xs font-semibold text-white hover:bg-amber-700">Mohon batal</button>
+                                                </form>
+                                            @elseif ($payment->receipt?->status === 'CANCELLATION_REQUESTED' && auth()->user()->hasAnyPibgsraRole(['HEADMASTER']))
+                                                <form method="POST" action="{{ route('payments.approve-cancellation', $payment) }}" onsubmit="return confirm('Luluskan pembatalan resit ini?');">
+                                                    @csrf
+                                                    <input name="reason" required maxlength="500" value="{{ $payment->receipt?->cancellation_reason }}" class="mb-1 w-40 rounded border border-slate-300 px-2 py-1 text-xs">
+                                                    <button class="rounded bg-red-600 px-2 py-1 text-xs font-semibold text-white hover:bg-red-700">Lulus & batal</button>
+                                                </form>
+                                            @elseif ($payment->receipt?->status === 'CANCELLATION_REQUESTED')
+                                                <span class="text-xs text-amber-700">Menunggu kelulusan Guru Besar</span>
                                             @else
                                                 <span class="text-xs text-slate-400">-</span>
                                             @endif
